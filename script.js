@@ -140,25 +140,32 @@ function importJSONBackup(event) {
     }
 }
 
-// --- DYNAMIC RESPONSIVE SCALING ---
+// --- DYNAMIC RESPONSIVE SCALING (FIXED ORIGIN LOGIC) ---
 function scaleCV() {
     const cv = document.getElementById('cv-template');
     const wrapper = cv.parentElement;
     if (!cv || !wrapper) return;
 
-    const targetWidth = 794; // 210mm in pixels
-    const parentWidth = wrapper.clientWidth - 20; // 20px padding buffer
+    const targetWidth = 794; // approx 210mm in pixels at 96dpi
+    const padding = 40; 
+    const parentWidth = wrapper.clientWidth;
 
-    if (parentWidth < targetWidth) {
-        const scale = parentWidth / targetWidth;
-        cv.style.transform = `scale(${scale})`;
+    if (parentWidth < (targetWidth + padding)) {
+        // Needs scaling down
+        const scale = (parentWidth - padding) / targetWidth;
+        const translateX = padding / 2;
+        cv.style.transform = `translate(${translateX}px, 0) scale(${scale})`;
+        
         if (wrapper.id === 'originalCvContainer') {
             wrapper.style.height = `${cv.offsetHeight * scale}px`;
         }
     } else {
-        cv.style.transform = 'none';
+        // Normal size, just center it
+        const translateX = (parentWidth - targetWidth) / 2;
+        cv.style.transform = `translate(${translateX}px, 0) scale(1)`;
+        
         if (wrapper.id === 'originalCvContainer') {
-            wrapper.style.height = 'auto';
+            wrapper.style.height = `${cv.offsetHeight}px`;
         }
     }
 }
@@ -173,12 +180,12 @@ function setupModalLogic() {
 
     previewModal.addEventListener('show.bs.modal', () => {
         modalBodyDest.appendChild(cvTemplate);
-        setTimeout(scaleCV, 50); // Recalculate scale inside modal
+        setTimeout(scaleCV, 50); 
     });
 
     previewModal.addEventListener('hidden.bs.modal', () => {
         originalContainer.appendChild(cvTemplate);
-        setTimeout(scaleCV, 50); // Recalculate scale back on main page
+        setTimeout(scaleCV, 50); 
     });
 }
 
@@ -227,7 +234,7 @@ function updatePreview() {
     document.getElementById('cvLanguages').innerHTML = processList(document.getElementById('inputLanguages').value);
 
     analyzeCVStrength();
-    scaleCV(); // Recalculate height dynamically when adding/removing text
+    scaleCV(); 
 }
 
 function analyzeCVStrength() {
@@ -295,47 +302,52 @@ function handlePhotoUpload(event) {
     }
 }
 
-// --- FLAWLESS PDF EXPORT WITH LOADING SCREEN ---
+// --- FLAWLESS PDF EXPORT WITH LOADING SCREEN & SCROLL FIX ---
 function exportPDF() {
     const element = document.getElementById('cv-template');
     const overlay = document.getElementById('loadingOverlay');
     const safeName = document.getElementById('inputName').value.trim().replace(/\s+/g, '_') || 'My_Pro';
     
-    // Show Loading Overlay
+    // 1. Show Loading Overlay
     overlay.classList.remove('d-none');
     overlay.classList.add('d-flex');
 
-    // Use a small timeout so the browser has time to render the loading spinner before freezing for PDF processing
+    // 2. Snap page to top to prevent the library from chopping the top off
+    window.scrollTo(0, 0);
+
+    // Timeout allows DOM to update overlay before thread freezes
     setTimeout(() => {
-        // Strip the mobile zoom scale so the PDF engine captures standard A4 dimensions perfectly
+        // 3. Strip scaling to lock exact A4 dimension for high-res PDF
         element.style.transform = 'none';
+        element.style.width = '210mm';
 
         const opt = {
             margin: 0,
             filename: `${safeName}_CV.pdf`,
-            image: { type: 'jpeg', quality: 0.98 }, // Highest quality
+            image: { type: 'jpeg', quality: 1 }, 
             html2canvas: { 
-                scale: 2, // Retain sharp HD text
+                scale: 2, 
                 useCORS: true, 
                 allowTaint: true, 
-                windowWidth: 794 // Lock the internal rendering width exactly to A4 pixels
+                scrollY: 0, // CRUCIAL FIX: Ignores physical scrollbar offset
+                windowWidth: 794 
             },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-            pagebreak: { mode: 'css', avoid: ['.mb-4', '.header-section'] }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
         };
 
         html2pdf().set(opt).from(element).save().then(() => {
             overlay.classList.remove('d-flex');
             overlay.classList.add('d-none');
-            scaleCV(); // Restore mobile scaling
+            scaleCV(); // Restore layout scale
         }).catch(err => {
             console.error(err);
             alert("Error generating PDF.");
             overlay.classList.remove('d-flex');
             overlay.classList.add('d-none');
-            scaleCV(); // Restore scaling even if it fails
+            scaleCV(); 
         });
-    }, 150);
+    }, 300);
 }
 
 function loadInitialData() {
