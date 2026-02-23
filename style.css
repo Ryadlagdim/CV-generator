@@ -1,18 +1,15 @@
-/* Core Page Scrolling & Layout Fixes */
 body { font-family: 'Inter', sans-serif; background-color: #f8f9fa !important; overflow-x: hidden; }
 
-/* Let sections flow naturally without restricted height or 100% width */
-.desk-area { background-color: #e2e8f0; }
-
-/* Responsive Wrapper ensuring it scales and scrolls horizontally on mobile */
+/* Responsive Wrapper Fixed for Scaling */
 .a4-wrapper {
     width: 100%;
-    overflow-x: auto;
+    overflow: hidden; /* Stops horizontal scroll bars */
     display: flex;
     justify-content: center;
+    transition: height 0.3s ease;
 }
 
-/* Strict A4 Paper - Multi-page Support */
+/* Strict A4 Paper - Fixed for PDF Engine */
 .a4-page {
     width: 210mm; 
     min-height: 297mm; 
@@ -23,7 +20,8 @@ body { font-family: 'Inter', sans-serif; background-color: #f8f9fa !important; o
     overflow: visible; 
     margin: 0 auto; 
     transition: font-family 0.3s ease;
-    flex-shrink: 0; /* Prevents squishing on small screens */
+    flex-shrink: 0;
+    transform-origin: top center; /* CRUCIAL FOR ZOOM FIX */
 }
 .a4-page > .row { margin: 0; height: 100%; min-height: 297mm; flex-wrap: nowrap; }
 
