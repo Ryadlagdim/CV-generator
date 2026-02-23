@@ -17,6 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedCVs = getSavedCVs();
     if (savedCVs.length === 0) loadInitialData();
     else loadCV(savedCVs[0].id);
+
+    // Initial scale adjustment
+    setTimeout(scaleCV, 100);
 });
 
 // --- CORE DATA HANDLING ---
@@ -137,6 +140,30 @@ function importJSONBackup(event) {
     }
 }
 
+// --- DYNAMIC RESPONSIVE SCALING ---
+function scaleCV() {
+    const cv = document.getElementById('cv-template');
+    const wrapper = cv.parentElement;
+    if (!cv || !wrapper) return;
+
+    const targetWidth = 794; // 210mm in pixels
+    const parentWidth = wrapper.clientWidth - 20; // 20px padding buffer
+
+    if (parentWidth < targetWidth) {
+        const scale = parentWidth / targetWidth;
+        cv.style.transform = `scale(${scale})`;
+        if (wrapper.id === 'originalCvContainer') {
+            wrapper.style.height = `${cv.offsetHeight * scale}px`;
+        }
+    } else {
+        cv.style.transform = 'none';
+        if (wrapper.id === 'originalCvContainer') {
+            wrapper.style.height = 'auto';
+        }
+    }
+}
+window.addEventListener('resize', scaleCV);
+
 // --- UI LOGIC & DIALOG PREVIEW MOVER ---
 function setupModalLogic() {
     const previewModal = document.getElementById('previewModal');
@@ -144,14 +171,14 @@ function setupModalLogic() {
     const originalContainer = document.getElementById('originalCvContainer');
     const modalBodyDest = document.getElementById('modalBodyDest');
 
-    // Move CV into Dialog when Opened
     previewModal.addEventListener('show.bs.modal', () => {
         modalBodyDest.appendChild(cvTemplate);
+        setTimeout(scaleCV, 50); // Recalculate scale inside modal
     });
 
-    // Move CV back to Desk Area when Closed
     previewModal.addEventListener('hidden.bs.modal', () => {
         originalContainer.appendChild(cvTemplate);
+        setTimeout(scaleCV, 50); // Recalculate scale back on main page
     });
 }
 
@@ -200,6 +227,7 @@ function updatePreview() {
     document.getElementById('cvLanguages').innerHTML = processList(document.getElementById('inputLanguages').value);
 
     analyzeCVStrength();
+    scaleCV(); // Recalculate height dynamically when adding/removing text
 }
 
 function analyzeCVStrength() {
@@ -267,35 +295,47 @@ function handlePhotoUpload(event) {
     }
 }
 
+// --- FLAWLESS PDF EXPORT WITH LOADING SCREEN ---
 function exportPDF() {
     const element = document.getElementById('cv-template');
+    const overlay = document.getElementById('loadingOverlay');
     const safeName = document.getElementById('inputName').value.trim().replace(/\s+/g, '_') || 'My_Pro';
     
-    const opt = {
-        margin: 0,
-        filename: `${safeName}_CV.pdf`,
-        image: { type: 'jpeg', quality: 0.85 },
-        html2canvas: { scale: 1.5, useCORS: true, allowTaint: true, windowWidth: element.scrollWidth },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-        pagebreak: { mode: ['css', 'legacy'] }
-    };
+    // Show Loading Overlay
+    overlay.classList.remove('d-none');
+    overlay.classList.add('d-flex');
 
-    const btns = [document.getElementById('exportBtn'), document.querySelector('.modal-header .btn-primary')];
-    
-    btns.forEach(btn => {
-        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...'; btn.disabled = true; }
-    });
+    // Use a small timeout so the browser has time to render the loading spinner before freezing for PDF processing
+    setTimeout(() => {
+        // Strip the mobile zoom scale so the PDF engine captures standard A4 dimensions perfectly
+        element.style.transform = 'none';
 
-    html2pdf().set(opt).from(element).save().then(() => {
-        btns.forEach(btn => {
-            if (btn) { btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i>Download PDF'; btn.disabled = false; }
+        const opt = {
+            margin: 0,
+            filename: `${safeName}_CV.pdf`,
+            image: { type: 'jpeg', quality: 0.98 }, // Highest quality
+            html2canvas: { 
+                scale: 2, // Retain sharp HD text
+                useCORS: true, 
+                allowTaint: true, 
+                windowWidth: 794 // Lock the internal rendering width exactly to A4 pixels
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+            pagebreak: { mode: 'css', avoid: ['.mb-4', '.header-section'] }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            overlay.classList.remove('d-flex');
+            overlay.classList.add('d-none');
+            scaleCV(); // Restore mobile scaling
+        }).catch(err => {
+            console.error(err);
+            alert("Error generating PDF.");
+            overlay.classList.remove('d-flex');
+            overlay.classList.add('d-none');
+            scaleCV(); // Restore scaling even if it fails
         });
-    }).catch(err => {
-        alert("Error generating PDF.");
-        btns.forEach(btn => {
-            if (btn) { btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i>Download PDF'; btn.disabled = false; }
-        });
-    });
+    }, 150);
 }
 
 function loadInitialData() {
