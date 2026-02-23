@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro CV Generator (Ultimate)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <div id="formPanelColumn" class="col-xl-4 col-lg-5 col-md-5 d-flex flex-column gap-3">
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white p-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-save me-2"></i>My Saved CVs</h6>
+                    <button class="btn btn-sm btn-light" onclick="createNewCV()">New CV</button>
+                </div>
+                <div class="card-body pb-2">
+                    <ul id="savedCVList" class="list-group list-group-flush mb-3"></ul>
+                    <button class="btn btn-success w-100 fw-bold mb-2" onclick="saveCurrentCV()"><i class="fas fa-cloud-upload-alt me-2"></i>Save Current CV</button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm w-50" onclick="exportJSONBackup()"><i class="fas fa-download me-1"></i> Backup JSON</button>
+                        <label class="btn btn-outline-secondary btn-sm w-50 mb-0 text-center" style="cursor: pointer;">
+                            <i class="fas fa-upload me-1"></i> Restore
+                            <input type="file" id="importJsonBtn" accept=".json" style="display: none;" onchange="importJSONBackup(event)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-dark text-white">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0"><i class="fas fa-chart-line me-2 text-info"></i>CV Strength Score</h6>
+                        <span id="scoreText" class="fw-bold fs-5 text-info">0/100</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 10px; background-color: #333;">
+                        <div id="scoreBar" class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small id="scoreFeedback" class="text-muted mt-2 d-block" style="font-size: 0.75rem;">Add more content to boost your score.</small>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 flex-grow-1">
+                <div class="card-body p-0">
+                    <div class="p-3">
+                        <label class="form-label text-muted small fw-bold">CV Template Style</label>
+                        <select id="templateSelector" class="form-select mb-3">
+                            <option value="style-sidebar">Professional Left Sidebar</option>
+                            <option value="style-sidebar-right">Modern Right Sidebar</option>
+                            <option value="style-minimal">Minimalist Top Header</option>
+                            <option value="style-executive">Executive (Classic & Clean)</option>
+                            <option value="style-split">Split Equal Columns</option>
+                            <option value="style-dark">Dark Mode Professional</option>
+                            <option value="style-timeline">Modern Timeline</option>
+                            <option value="style-cyber">Cyber/Tech Minimal</option>
+                            <option value="style-elegant">Elegant Centered</option>
+                        </select>
+
+                        <label class="form-label text-muted small fw-bold">Typography (Font)</label>
+                        <select id="fontSelector" class="form-select mb-3">
+                            <option value="'Inter', sans-serif">Inter (Modern & Clean)</option>
+                            <option value="'Roboto', sans-serif">Roboto (Tech & Standard)</option>
+                            <option value="'Montserrat', sans-serif">Montserrat (Bold & Geometric)</option>
+                            <option value="'Playfair Display', serif">Playfair Display (Elegant Serif)</option>
+                            <option value="'Roboto Mono', monospace">Roboto Mono (Developer/Code)</option>
+                        </select>
+
+                        <div class="d-flex gap-3">
+                            <div class="w-50"><label class="form-label text-muted small fw-bold">Theme Color</label><input type="color" id="themeColor" class="form-control form-control-color w-100" value="#1e293b"></div>
+                            <div class="w-50"><label class="form-label text-muted small fw-bold">Profile Photo</label><input type="file" id="photoInput" class="form-control form-control-sm" accept="image/*"></div>
+                        </div>
+                    </div>
+
+                    <form id="cvForm" onsubmit="event.preventDefault()">
+                        <div class="accordion accordion-flush" id="cvAccordion">
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header"><button class="accordion-button bg-light border-top" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">Personal Info & Links</button></h2>
+                                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#cvAccordion">
+                                    <div class="accordion-body">
+                                        <div class="form-floating mb-2"><input type="text" class="form-control" id="inputName" placeholder="Name"><label>Full Name</label></div>
+                                        <div class="form-floating mb-2"><input type="text" class="form-control" id="inputTitle" placeholder="Title"><label>Professional Title</label></div>
+                                        <div class="form-floating mb-2"><input type="email" class="form-control" id="inputEmail" placeholder="Email"><label>Email Address</label></div>
+                                        <div class="form-floating mb-2"><input type="text" class="form-control" id="inputPhone" placeholder="Phone"><label>Phone Number</label></div>
+                                        <div class="form-floating mb-2"><input type="text" class="form-control" id="inputAddress" placeholder="Address"><label>Location / Address</label></div>
+                                        <div class="form-floating mb-2"><input type="url" class="form-control" id="inputLink" placeholder="Portfolio"><label>Portfolio/LinkedIn URL</label></div>
+                                        
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" id="showQrCheckbox" checked>
+                                            <label class="form-check-label text-muted small fw-bold" for="showQrCheckbox">Generate QR Code for this link</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header"><button class="accordion-button collapsed bg-light border-top" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">Experience & Education</button></h2>
+                                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#cvAccordion">
+                                    <div class="accordion-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-muted small fw-bold">Layout Order</span>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="swapSections()"><i class="fas fa-exchange-alt me-1"></i> Swap Exp/Edu</button>
+                                        </div>
+                                        <div class="mb-4"><label class="form-label text-muted small fw-bold">Professional Summary</label><div id="editorSummary" style="height: 100px; background: white;"></div></div>
+                                        <div class="mb-4"><label class="form-label text-muted small fw-bold">Work Experience</label><div id="editorExperience" style="height: 150px; background: white;"></div></div>
+                                        <div class="mb-3"><label class="form-label text-muted small fw-bold">Education</label><div id="editorEducation" style="height: 100px; background: white;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header"><button class="accordion-button collapsed bg-light border-top" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">Skills & Languages</button></h2>
+                                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#cvAccordion">
+                                    <div class="accordion-body">
+                                        <div class="form-floating mb-3"><textarea class="form-control" id="inputSkills" style="height: 100px" placeholder="Skills"></textarea><label>Skills (Comma separated)</label></div>
+                                        <div class="form-floating mb-3"><textarea class="form-control" id="inputLanguages" style="height: 100px" placeholder="Languages"></textarea><label>Languages (Comma separated)</label></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="deskAreaColumn" class="col-xl-8 col-lg-7 col-md-7 desk-area bg-light rounded shadow-sm border p-4">
+            
+            <div class="d-flex justify-content-between align-items-center w-100 mb-3">
+                <h5 class="text-muted mb-0 d-none d-md-block"><i class="fas fa-eye me-2"></i>Live Preview</h5>
+                <button type="button" class="btn btn-secondary shadow-sm rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#previewModal">
+                    <i class="fas fa-expand me-2"></i>Full Screen
+                </button>
+            </div>
+
+            <div id="originalCvContainer" class="a4-wrapper">
+                <div id="cv-template" class="a4-page shadow-lg style-sidebar">
+                    <div class="row h-100 g-0">
+                        <div class="col-4 theme-bg text-white p-4 d-flex flex-column h-100 transition-color" id="cvSidebar">
+                            <div class="photo-container mx-auto mb-4 mt-2 shadow"><img id="cvPhoto" src="https://via.placeholder.com/150" alt="Profile"></div>
+                            
+                            <div class="contact-info mb-4 w-100">
+                                <h6 class="text-uppercase fw-bold border-bottom border-secondary pb-2 mb-3 align-left">Contact</h6>
+                                <div class="small mb-2 align-left"><i class="fas fa-envelope me-2 text-light"></i><span id="cvEmail"></span></div>
+                                <div class="small mb-2 align-left"><i class="fas fa-phone me-2 text-light"></i><span id="cvPhone"></span></div>
+                                <div class="small mb-2 align-left"><i class="fas fa-map-marker-alt me-2 text-light"></i><span id="cvAddress"></span></div>
+                            </div>
+                            
+                            <div class="qr-info mb-4 w-100 text-center" id="qrContainer" style="display: none;">
+                                <h6 class="text-uppercase fw-bold border-bottom border-secondary pb-2 mb-3 align-left">Portfolio / Link</h6>
+                                <canvas id="qrCanvas" class="bg-white p-1 rounded shadow-sm"></canvas>
+                            </div>
+
+                            <div class="skills-info mb-4 w-100">
+                                <h6 class="text-uppercase fw-bold border-bottom border-secondary pb-2 mb-3 align-left">Skills</h6>
+                                <ul id="cvSkills" class="list-unstyled small ps-0 align-left w-100"></ul>
+                            </div>
+                            
+                            <div class="languages-info w-100">
+                                <h6 class="text-uppercase fw-bold border-bottom border-secondary pb-2 mb-3 align-left">Languages</h6>
+                                <ul id="cvLanguages" class="list-unstyled small ps-0 align-left w-100"></ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-8 bg-white p-5 h-100 d-flex flex-column" id="mainContentArea">
+                            <div class="header-section mb-4" id="sectionHeader" style="order: 1;">
+                                <h1 id="cvName" class="display-5 fw-bold text-dark text-uppercase mb-1 tracking-wide"></h1>
+                                <h4 id="cvTitle" class="theme-text transition-color fw-light mb-0"></h4>
+                            </div>
+                            
+                            <div class="content-section flex-grow-1" id="sectionFlow">
+                                <div class="mb-4" id="blockSummary" style="order: 2;">
+                                    <h5 class="text-uppercase fw-bold theme-text border-bottom pb-2 mb-3 transition-color align-left"><i class="fas fa-user me-2"></i>Profile</h5>
+                                    <div id="cvSummary" class="text-muted small lh-lg rich-text-preview align-left"></div>
+                                </div>
+                                <div class="mb-4" id="blockExperience" style="order: 3;">
+                                    <h5 class="text-uppercase fw-bold theme-text border-bottom pb-2 mb-3 transition-color align-left"><i class="fas fa-briefcase me-2"></i>Experience</h5>
+                                    <div id="cvExperience" class="text-dark small lh-lg rich-text-preview align-left"></div>
+                                </div>
+                                <div class="mb-4" id="blockEducation" style="order: 4;">
+                                    <h5 class="text-uppercase fw-bold theme-text border-bottom pb-2 mb-3 transition-color align-left"><i class="fas fa-graduation-cap me-2"></i>Education</h5>
+                                    <div id="cvEducation" class="text-dark small lh-lg rich-text-preview align-left"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary w-100 mt-3 py-3 fw-bold shadow-sm" onclick="exportPDF()"><i class="fas fa-file-pdf me-2"></i>Download PDF Document</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content" style="background-color: #525659;">
+      <div class="modal-header border-0 bg-dark text-white shadow">
+        <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>Full CV Preview</h5>
+        <div>
+            <button class="btn btn-primary btn-sm me-3" onclick="exportPDF()"><i class="fas fa-download me-1"></i> Download PDF</button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="modal-body overflow-auto py-5 d-flex justify-content-center" id="modalBodyDest">
+          </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

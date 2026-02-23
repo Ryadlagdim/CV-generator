@@ -1,0 +1,126 @@
+/* Core Page Scrolling & Layout Fixes */
+body { font-family: 'Inter', sans-serif; background-color: #f8f9fa !important; overflow-x: hidden; }
+
+/* Let sections flow naturally without restricted height or 100% width */
+.desk-area { background-color: #e2e8f0; }
+
+/* Responsive Wrapper ensuring it scales and scrolls horizontally on mobile */
+.a4-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+}
+
+/* Strict A4 Paper - Multi-page Support */
+.a4-page {
+    width: 210mm; 
+    min-height: 297mm; 
+    height: auto;
+    background: white; 
+    box-sizing: border-box; 
+    position: relative;
+    overflow: visible; 
+    margin: 0 auto; 
+    transition: font-family 0.3s ease;
+    flex-shrink: 0; /* Prevents squishing on small screens */
+}
+.a4-page > .row { margin: 0; height: 100%; min-height: 297mm; flex-wrap: nowrap; }
+
+/* Perfect Alignment & Ordering Utilities */
+.align-left { text-align: left !important; justify-content: flex-start !important; }
+#sectionFlow { display: flex; flex-direction: column; }
+.photo-container { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 4px solid rgba(255,255,255,0.2); }
+#cvPhoto { width: 100%; height: 100%; object-fit: cover; }
+.tracking-wide { letter-spacing: 0.05em; }
+.transition-color { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+#qrCanvas { width: 90px !important; height: 90px !important; }
+
+.skill-badge {
+    display: inline-block; background: rgba(255,255,255,0.1); padding: 5px 12px;
+    border-radius: 4px; margin-bottom: 8px; width: 100%; border-left: 3px solid rgba(255,255,255,0.5);
+    box-sizing: border-box; font-weight: 500;
+}
+
+/* Rich Text Constraints */
+.rich-text-preview { text-align: justify; }
+.rich-text-preview p { margin-bottom: 0.7rem; }
+.rich-text-preview ul, .rich-text-preview ol { padding-left: 20px; margin-bottom: 0.8rem; text-align: left; }
+.rich-text-preview li { margin-bottom: 0.3rem; }
+.rich-text-preview strong { color: #111; font-weight: 700; }
+
+/* PDF Pagination Breaks */
+.content-section > .mb-4, .header-section { page-break-inside: avoid; break-inside: avoid; }
+
+/* =========================================
+   TEMPLATE STYLES (9 Lit Variants)
+   ========================================= */
+
+/* 1. Sidebar Default (Native) */
+
+/* 2. Right Sidebar */
+.style-sidebar-right .row { flex-direction: row-reverse; }
+
+/* 3. Minimalist Top Header */
+.style-minimal .row { flex-direction: column; }
+.style-minimal .col-4 { width: 100%; height: auto !important; flex: 0 0 auto; padding: 20px 50px !important; display: flex !important; flex-direction: row; align-items: center; justify-content: space-between; }
+.style-minimal .photo-container { margin: 0 !important; width: 100px; height: 100px; }
+.style-minimal .contact-info, .style-minimal .skills-info, .style-minimal .languages-info { margin-bottom: 0 !important; text-align: left; width: auto; }
+.style-minimal .qr-info { display: none !important; }
+.style-minimal .col-8 { width: 100%; flex: 1 1 auto; padding: 40px 50px !important; }
+.style-minimal .skill-badge { width: auto; margin-right: 8px; display: inline-block; }
+
+/* 4. Executive Classic */
+.style-executive .row { flex-direction: column; }
+.style-executive .col-4 { width: 100%; height: auto !important; flex: 0 0 auto; background: transparent !important; color: #333 !important; padding: 40px 50px 20px 50px !important; display: flex !important; flex-direction: row; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid var(--theme-color-var, #333); }
+.style-executive .photo-container { display: none; }
+.style-executive .contact-info, .style-executive .skills-info, .style-executive .languages-info { width: 30%; text-align: left; }
+.style-executive .qr-info { display: inline-block; width: auto; vertical-align: top; margin-left: 15px; }
+.style-executive .col-4 i, .style-executive .col-4 h6 { color: #555 !important; border-bottom-color: #ccc !important; }
+.style-executive .col-8 { width: 100%; flex: 1 1 auto; padding: 30px 50px !important; }
+.style-executive .header-section { text-align: center; margin-bottom: 40px; }
+.style-executive .skill-badge { background: #f0f0f0; color: #333; border-left-color: var(--theme-color-var); width: auto; display: inline-block; margin-right: 5px; }
+
+/* 5. Split Equal */
+.style-split .col-4 { width: 40%; padding: 40px 30px !important; }
+.style-split .col-8 { width: 60%; padding: 40px 40px !important; }
+
+/* 6. Dark Mode */
+.style-dark { background-color: #121212 !important; color: #e0e0e0 !important; }
+.style-dark .col-8 { background-color: #1a1a1a !important; }
+.style-dark .text-dark { color: #ffffff !important; }
+.style-dark .text-muted { color: #bbbbbb !important; }
+.style-dark .rich-text-preview strong { color: #ffffff; }
+.style-dark .theme-bg { background-color: #0d0d0d !important; border-right: 1px solid #333; }
+.style-dark .skill-badge { background: rgba(255,255,255,0.05); border-left-color: var(--theme-color-var, #fff); }
+
+/* 7. Timeline */
+.style-timeline .row { flex-direction: row; }
+.style-timeline .col-4 { background: #f8f9fa !important; color: #333 !important; border-right: 2px solid #eaeaea; }
+.style-timeline .col-4 h6 { color: var(--theme-color-var) !important; border-bottom-color: #ccc !important; }
+.style-timeline .col-4 i { color: var(--theme-color-var) !important; }
+.style-timeline .skill-badge { background: #fff; color: #333; border: 1px solid #ddd; border-left: 3px solid var(--theme-color-var); }
+.style-timeline .rich-text-preview { border-left: 2px solid var(--theme-color-var); padding-left: 25px; margin-left: 10px; }
+
+/* 8. Cyber/Tech Minimal */
+.style-cyber { background-color: #0d1117 !important; color: #c9d1d9 !important; font-family: 'Roboto Mono', monospace !important; }
+.style-cyber .col-8 { background-color: #0d1117 !important; }
+.style-cyber .col-4 { background-color: #161b22 !important; border-right: 1px solid #30363d; }
+.style-cyber h1, .style-cyber h4, .style-cyber h5, .style-cyber h6 { color: var(--theme-color-var) !important; text-transform: uppercase; letter-spacing: 1px; }
+.style-cyber .text-dark { color: #e6edf3 !important; }
+.style-cyber .text-muted { color: #8b949e !important; }
+.style-cyber .rich-text-preview strong { color: #58a6ff; font-weight: normal; }
+.style-cyber .skill-badge { background: transparent; border: 1px solid #30363d; color: #c9d1d9; border-left: 3px solid var(--theme-color-var); border-radius: 0; }
+.style-cyber .photo-container { border-radius: 10px; border-color: var(--theme-color-var); }
+
+/* 9. Elegant Centered */
+.style-elegant .row { flex-direction: column; }
+.style-elegant .col-4 { width: 100%; text-align: center; background: transparent !important; color: #333 !important; height: auto !important; padding: 50px 50px 10px 50px !important; display: block; }
+.style-elegant .col-8 { width: 100%; padding: 20px 80px 50px 80px !important; }
+.style-elegant .photo-container { display: none; }
+.style-elegant .contact-info, .style-elegant .skills-info, .style-elegant .languages-info { display: inline-block; width: auto; margin: 0 15px !important; vertical-align: top; }
+.style-elegant .qr-info { display: inline-block; width: auto; vertical-align: top; margin: 0 15px; }
+.style-elegant .col-4 h6 { border: none !important; color: var(--theme-color-var) !important; }
+.style-elegant .header-section { text-align: center; border-bottom: 2px solid var(--theme-color-var); padding-bottom: 20px; margin-bottom: 30px; }
+.style-elegant .skill-badge { background: transparent; color: #555; border: 1px solid #ddd; width: auto; margin: 2px; }
+.style-elegant .align-left { text-align: center !important; justify-content: center !important; }
