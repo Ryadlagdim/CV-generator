@@ -18,11 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedCVs.length === 0) loadInitialData();
     else loadCV(savedCVs[0].id);
 
-    // Initial scale adjustment
     setTimeout(scaleCV, 100);
 });
 
-// --- CORE DATA HANDLING ---
 function getFormData() {
     return {
         id: currentCvId || Date.now().toString(),
@@ -76,7 +74,6 @@ function populateForm(data) {
     updateTemplateStyle(); updateFontFamily(); updatePreview(); updateThemeColor();
 }
 
-// --- CRUD & ADVANCED BACKUP ---
 function getSavedCVs() { return JSON.parse(localStorage.getItem('savedCVs')) || []; }
 
 function saveCurrentCV() {
@@ -140,63 +137,43 @@ function importJSONBackup(event) {
     }
 }
 
-// --- DYNAMIC RESPONSIVE SCALING (FIXED ORIGIN LOGIC) ---
 function scaleCV() {
     const cv = document.getElementById('cv-template');
     const wrapper = cv.parentElement;
     if (!cv || !wrapper) return;
 
-    const targetWidth = 794; // approx 210mm in pixels at 96dpi
-    const padding = 40; 
+    const targetWidth = 794; 
+    const padding = 20; 
     const parentWidth = wrapper.clientWidth;
 
     if (parentWidth < (targetWidth + padding)) {
-        // Needs scaling down
         const scale = (parentWidth - padding) / targetWidth;
         const translateX = padding / 2;
         cv.style.transform = `translate(${translateX}px, 0) scale(${scale})`;
-        
-        if (wrapper.id === 'originalCvContainer') {
-            wrapper.style.height = `${cv.offsetHeight * scale}px`;
-        }
+        if (wrapper.id === 'originalCvContainer') { wrapper.style.height = `${cv.offsetHeight * scale}px`; }
     } else {
-        // Normal size, just center it
         const translateX = (parentWidth - targetWidth) / 2;
         cv.style.transform = `translate(${translateX}px, 0) scale(1)`;
-        
-        if (wrapper.id === 'originalCvContainer') {
-            wrapper.style.height = `${cv.offsetHeight}px`;
-        }
+        if (wrapper.id === 'originalCvContainer') { wrapper.style.height = `${cv.offsetHeight}px`; }
     }
 }
 window.addEventListener('resize', scaleCV);
 
-// --- UI LOGIC & DIALOG PREVIEW MOVER ---
 function setupModalLogic() {
     const previewModal = document.getElementById('previewModal');
     const cvTemplate = document.getElementById('cv-template');
     const originalContainer = document.getElementById('originalCvContainer');
     const modalBodyDest = document.getElementById('modalBodyDest');
 
-    previewModal.addEventListener('show.bs.modal', () => {
-        modalBodyDest.appendChild(cvTemplate);
-        setTimeout(scaleCV, 50); 
-    });
-
-    previewModal.addEventListener('hidden.bs.modal', () => {
-        originalContainer.appendChild(cvTemplate);
-        setTimeout(scaleCV, 50); 
-    });
+    previewModal.addEventListener('show.bs.modal', () => { modalBodyDest.appendChild(cvTemplate); setTimeout(scaleCV, 50); });
+    previewModal.addEventListener('hidden.bs.modal', () => { originalContainer.appendChild(cvTemplate); setTimeout(scaleCV, 50); });
 }
 
 function setupLiveUpdating() {
     const inputs = ['inputName', 'inputTitle', 'inputEmail', 'inputPhone', 'inputAddress', 'inputLink', 'inputSkills', 'inputLanguages'];
     inputs.forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
-    
     document.getElementById('showQrCheckbox').addEventListener('change', updatePreview);
-    
     quillSummary.on('text-change', updatePreview); quillExperience.on('text-change', updatePreview); quillEducation.on('text-change', updatePreview);
-
     document.getElementById('themeColor').addEventListener('input', updateThemeColor);
     document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
     document.getElementById('templateSelector').addEventListener('change', updateTemplateStyle);
@@ -302,71 +279,92 @@ function handlePhotoUpload(event) {
     }
 }
 
-// --- FLAWLESS PDF EXPORT WITH LOADING SCREEN & SCROLL FIX ---
+// =========================================================
+// ISOLATED IFRAME PRINT EXPORT (Guarantees zero blank pages)
+// =========================================================
 function exportPDF() {
-    const element = document.getElementById('cv-template');
-    const overlay = document.getElementById('loadingOverlay');
-    const safeName = document.getElementById('inputName').value.trim().replace(/\s+/g, '_') || 'My_Pro';
+    const cvTemplate = document.getElementById('cv-template');
     
-    // 1. Show Loading Overlay
-    overlay.classList.remove('d-none');
-    overlay.classList.add('d-flex');
-
-    // 2. Snap page to top to prevent the library from chopping the top off
-    window.scrollTo(0, 0);
-
-    // Timeout allows DOM to update overlay before thread freezes
+    // 1. Create an invisible iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+    
+    // 2. Grab the exact HTML and all CSS styling from the main page
+    const styles = document.head.innerHTML;
+    const cvHtml = cvTemplate.outerHTML;
+    
+    // 3. Write exactly one element into the iframe (the CV)
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>My_Pro_CV</title>
+            ${styles}
+            <style>
+                /* STRIP EVERYTHING THAT CAUSES BLANK PAGES */
+                @page { size: A4 portrait; margin: 0; }
+                body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                
+                /* Reset the CV to pure, unscaled A4 dimensions */
+                #cv-template { 
+                    width: 210mm !important; 
+                    min-height: 297mm !important; 
+                    margin: 0 !important; 
+                    padding: 0 !important; 
+                    box-shadow: none !important; 
+                    transform: none !important; 
+                    position: static !important;
+                }
+            </style>
+        </head>
+        <body>
+            ${cvHtml}
+        </body>
+        </html>
+    `);
+    doc.close();
+    
+    // 4. Manually re-draw the QR Code because innerHTML doesn't copy canvas pixels
+    const origCanvas = document.getElementById('qrCanvas');
+    const iframeCanvas = doc.getElementById('qrCanvas');
+    if (origCanvas && iframeCanvas) {
+        iframeCanvas.getContext('2d').drawImage(origCanvas, 0, 0);
+    }
+    
+    // 5. Trigger the print dialog after a tiny delay so custom fonts can load
     setTimeout(() => {
-        // 3. Strip scaling to lock exact A4 dimension for high-res PDF
-        element.style.transform = 'none';
-        element.style.width = '210mm';
-
-        const opt = {
-            margin: 0,
-            filename: `${safeName}_CV.pdf`,
-            image: { type: 'jpeg', quality: 1 }, 
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                allowTaint: true, 
-                scrollY: 0, // CRUCIAL FIX: Ignores physical scrollbar offset
-                windowWidth: 794 
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] }
-        };
-
-        html2pdf().set(opt).from(element).save().then(() => {
-            overlay.classList.remove('d-flex');
-            overlay.classList.add('d-none');
-            scaleCV(); // Restore layout scale
-        }).catch(err => {
-            console.error(err);
-            alert("Error generating PDF.");
-            overlay.classList.remove('d-flex');
-            overlay.classList.add('d-none');
-            scaleCV(); 
-        });
-    }, 300);
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        
+        // Remove the invisible iframe after printing is done
+        setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+    }, 500);
 }
 
+// RANDOMIZED PLACEHOLDER DATA
 function loadInitialData() {
     const defaultData = {
-        name: "Ryad Lagdim Soussi",
-        title: "Web Full-Stack Developer | Cybersecurity Student",
-        email: "ryad@example.com",
-        phone: "+212 600 000 000",
-        address: "Beni Mellal, Morocco",
-        link: "https://github.com",
+        name: "John Doe",
+        title: "Senior Project Manager",
+        email: "john.doe@example.com",
+        phone: "+1 555-0198",
+        address: "New York, NY",
+        link: "https://linkedin.com",
         showQr: true,
-        summary: "<p><strong>Dedicated Full-Stack Developer</strong> specializing in robust web applications, data handling, and secure architecture.</p>",
-        experience: "<p><strong>Technician | IT & Digital Transformation Dept.</strong><br><em>2025 - Present</em></p><ul><li>Managed digital infrastructure and implemented secure tools.</li></ul><p><strong>Freelance Developer</strong><br><em>2023 - 2025</em></p><ul><li>Developed URL tracking systems and dynamic web platforms.</li></ul>",
-        education: "<p><strong>Cybersecurity Studies</strong><br><em>2024 - Present</em></p>",
-        skills: "HTML, CSS, JavaScript, PHP, Penetration Testing",
-        languages: "English, French",
-        font: "'Roboto Mono', monospace",
-        template: "style-cyber",
-        color: "#58a6ff",
+        summary: "<p><strong>Results-driven professional</strong> with extensive experience leading cross-functional teams to deliver complex projects on time and under budget.</p>",
+        experience: "<p><strong>Lead Manager | Global Tech Corp</strong><br><em>2020 - Present</em></p><ul><li>Directed the successful launch of 5 major software products.</li><li>Managed a $2M annual budget and achieved a 15% reduction in operational costs.</li></ul><p><strong>Operations Specialist | Fast Solutions</strong><br><em>2016 - 2020</em></p><ul><li>Designed and implemented new workflow standards.</li></ul>",
+        education: "<p><strong>Master of Business Administration</strong><br><em>State University, 2016</em></p>",
+        skills: "Project Management, Agile, Scrum, Risk Analysis, Budgeting",
+        languages: "English, Spanish",
+        font: "'Inter', sans-serif",
+        template: "style-sidebar",
+        color: "#1e293b",
         expOrder: 3,
         eduOrder: 4
     };
