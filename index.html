@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro CV Generator (Ultimate)</title>
+    <title>Pro CV Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body class="bg-light">
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 no-print">
     <div class="row g-4">
         <div id="formPanelColumn" class="col-xl-4 col-lg-5 col-md-5 d-flex flex-column gap-3">
             
@@ -83,7 +82,6 @@
 
                     <form id="cvForm" onsubmit="event.preventDefault()">
                         <div class="accordion accordion-flush" id="cvAccordion">
-                            
                             <div class="accordion-item">
                                 <h2 class="accordion-header"><button class="accordion-button bg-light border-top" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">Personal Info & Links</button></h2>
                                 <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#cvAccordion">
@@ -94,7 +92,6 @@
                                         <div class="form-floating mb-2"><input type="text" class="form-control" id="inputPhone" placeholder="Phone"><label>Phone Number</label></div>
                                         <div class="form-floating mb-2"><input type="text" class="form-control" id="inputAddress" placeholder="Address"><label>Location / Address</label></div>
                                         <div class="form-floating mb-2"><input type="url" class="form-control" id="inputLink" placeholder="Portfolio"><label>Portfolio/LinkedIn URL</label></div>
-                                        
                                         <div class="form-check form-switch mt-2">
                                             <input class="form-check-input" type="checkbox" id="showQrCheckbox" checked>
                                             <label class="form-check-label text-muted small fw-bold" for="showQrCheckbox">Generate QR Code</label>
@@ -127,7 +124,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </form>
                 </div>
@@ -135,7 +131,6 @@
         </div>
 
         <div id="deskAreaColumn" class="col-xl-8 col-lg-7 col-md-7 desk-area bg-light rounded shadow-sm border p-4">
-            
             <div class="d-flex justify-content-between align-items-center w-100 mb-3">
                 <h5 class="text-muted mb-0 d-none d-md-block"><i class="fas fa-eye me-2"></i>Live Preview</h5>
                 <button type="button" class="btn btn-secondary shadow-sm rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#previewModal">
@@ -145,8 +140,8 @@
 
             <div id="originalCvContainer" class="a4-wrapper">
                 <div id="cv-template" class="a4-page shadow-lg style-sidebar">
-                    <div class="row h-100 g-0">
-                        <div class="col-4 theme-bg text-white p-4 d-flex flex-column h-100 transition-color" id="cvSidebar">
+                    <div class="row g-0 template-row">
+                        <div class="col-4 theme-bg text-white p-4 d-flex flex-column transition-color cv-sidebar" id="cvSidebar">
                             <div class="photo-container mx-auto mb-4 mt-2 shadow"><img id="cvPhoto" src="https://via.placeholder.com/150" alt="Profile"></div>
                             
                             <div class="contact-info mb-4 w-100">
@@ -166,13 +161,13 @@
                                 <ul id="cvSkills" class="list-unstyled small ps-0 align-left w-100"></ul>
                             </div>
                             
-                            <div class="languages-info w-100">
+                            <div class="languages-info w-100 flex-grow-1">
                                 <h6 class="text-uppercase fw-bold border-bottom border-secondary pb-2 mb-3 align-left">Languages</h6>
                                 <ul id="cvLanguages" class="list-unstyled small ps-0 align-left w-100"></ul>
                             </div>
                         </div>
                         
-                        <div class="col-8 bg-white p-5 h-100 d-flex flex-column" id="mainContentArea">
+                        <div class="col-8 bg-white p-5 d-flex flex-column cv-main" id="mainContentArea">
                             <div class="header-section mb-4" id="sectionHeader" style="order: 1;">
                                 <h1 id="cvName" class="display-5 fw-bold text-dark text-uppercase mb-1 tracking-wide"></h1>
                                 <h4 id="cvTitle" class="theme-text transition-color fw-light mb-0"></h4>
@@ -197,7 +192,7 @@
                 </div>
             </div>
             
-            <button class="btn btn-primary w-100 mt-3 py-3 fw-bold shadow-sm" onclick="exportPDF()"><i class="fas fa-file-pdf me-2"></i>Download High-Res A4 PDF</button>
+            <button class="btn btn-primary w-100 mt-3 py-3 fw-bold shadow-sm" onclick="exportPDF()"><i class="fas fa-print me-2"></i>Save as PDF / Print</button>
         </div>
     </div>
 </div>
@@ -205,25 +200,16 @@
 <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-fullscreen">
     <div class="modal-content" style="background-color: #333639;">
-      <div class="modal-header border-0 bg-dark text-white shadow">
+      <div class="modal-header border-0 bg-dark text-white shadow no-print">
         <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>Full CV Preview</h5>
         <div>
-            <button class="btn btn-primary btn-sm me-3" onclick="exportPDF()"><i class="fas fa-download me-1"></i> Download PDF</button>
+            <button class="btn btn-primary btn-sm me-3" onclick="exportPDF()"><i class="fas fa-print me-1"></i> Save as PDF</button>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
       </div>
-      <div class="modal-body overflow-auto py-5 d-block" id="modalBodyDest">
-          </div>
+      <div class="modal-body overflow-auto py-5 d-block" id="modalBodyDest"></div>
     </div>
   </div>
-</div>
-
-<div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 d-none justify-content-center align-items-center" style="z-index: 9999;">
-    <div class="text-white text-center">
-        <div class="spinner-border text-primary mb-3" style="width: 4rem; height: 4rem;" role="status"></div>
-        <h3 class="fw-bold">Generating A4 PDF...</h3>
-        <p class="text-light">Optimizing layout and securing high-resolution text.</p>
-    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
